@@ -6,6 +6,25 @@
     <title>My Google AI Studio App</title>
   </head>
   <body>
+    <script>
+      (function() {
+        try {
+          const descriptor = Object.getOwnPropertyDescriptor(window, 'fetch');
+          if (descriptor && !descriptor.writable && !descriptor.set && descriptor.configurable) {
+            const originalFetch = window.fetch;
+            Object.defineProperty(window, 'fetch', {
+              value: originalFetch,
+              writable: true,
+              configurable: true,
+              enumerable: true
+            });
+            console.log('Successfully made window.fetch writable in index.html');
+          }
+        } catch (e) {
+          console.error('Failed to fix window.fetch descriptor in index.html:', e);
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
