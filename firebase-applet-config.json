@@ -1,2 +1,10 @@
-
+{
+  "projectId": "gen-lang-client-0796496676",
+  "appId": "1:1001058114927:web:572c199bdbda86bbfd5c9a",
+  "apiKey": "AIzaSyAL8vLO3fFgAsr8j3pPzmdfyrHCxokm5Ig",
+  "authDomain": "gen-lang-client-0796496676.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-2f8e8ca0-8ef8-4ff3-b155-ccd0f0473a28",
+  "storageBucket": "gen-lang-client-0796496676.firebasestorage.app",
+  "messagingSenderId": "1001058114927",
+  "measurementId": ""
 }
