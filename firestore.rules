@@ -6,6 +6,9 @@ service cloud.firestore {
     // Assumed Data Model
     // ===============================================================
     //
+    // Collection: orders
+    // Fields: orderNo, customerName, materialGrade, totalQuantity, deliveryDate, status, createdAt
+    //
     // Collection: batches
     // Fields: batchNo, materialType, receivedDate
     //
@@ -62,6 +65,12 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow write: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
     }
 
     match /batches/{batchId} {

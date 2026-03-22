@@ -1,5 +1,16 @@
 export type ProcessStatus = 'cut' | 'centered' | 'charging' | 'hrm' | 'hrm-hot-out' | 'finished';
 
+export interface Order {
+  id: string;
+  orderNo: string;
+  customerName: string;
+  materialGrade: string;
+  totalQuantity: number;
+  deliveryDate: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  createdAt: string;
+}
+
 export interface Batch {
   id: string;
   batchNo: string;
@@ -9,6 +20,7 @@ export interface Batch {
 
 export interface BandSawEntry {
   id: string;
+  orderId: string; // Link to the order
   masterBatchNo: string;
   subBundleNo: string;
   cutLength: number;
@@ -39,6 +51,17 @@ export interface InspectionRecord {
   remarks: string;
   photoUrl?: string;
   date: string;
+}
+
+export type UserRole = 'admin' | 'operator' | 'viewer';
+
+export interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  role: UserRole;
+  createdAt: string;
 }
 
 export interface ProductionReport {

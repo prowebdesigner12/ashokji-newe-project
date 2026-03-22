@@ -24,15 +24,26 @@ const StatCard = ({ label, value, unit, icon, color }: StatProps) => (
   </div>
 );
 
-export const DashboardStats = () => {
+interface DashboardStatsProps {
+  stats: {
+    rawMaterial: number;
+    wip: number;
+    centered: number;
+    charging: number;
+    hrm: number;
+    finished: number;
+  };
+}
+
+export const DashboardStats = ({ stats }: DashboardStatsProps) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-      <StatCard label="Raw Material" value="906" unit="Kg" icon={<Package />} color="bg-blue-500" />
-      <StatCard label="WIP" value="294857" unit="Kg" icon={<ClipboardList />} color="bg-gray-500" />
-      <StatCard label="Centered" value="984" unit="Kg" icon={<Target />} color="bg-purple-500" />
-      <StatCard label="Charging" value="2410" unit="Kg" icon={<Flame />} color="bg-orange-500" />
-      <StatCard label="HRM" value="12140" unit="Kg" icon={<Settings />} color="bg-indigo-500" />
-      <StatCard label="Inspected Pcs" value="44488" unit="Pcs" icon={<CheckCircle />} color="bg-emerald-500" />
+      <StatCard label="Raw Material" value={stats.rawMaterial.toString()} unit="Kg" icon={<Package />} color="bg-blue-500" />
+      <StatCard label="WIP (Cut)" value={stats.wip.toString()} unit="Kg" icon={<ClipboardList />} color="bg-gray-500" />
+      <StatCard label="Centered" value={stats.centered.toString()} unit="Kg" icon={<Target />} color="bg-purple-500" />
+      <StatCard label="Charging" value={stats.charging.toString()} unit="Kg" icon={<Flame />} color="bg-orange-500" />
+      <StatCard label="HRM" value={stats.hrm.toString()} unit="Kg" icon={<Settings />} color="bg-indigo-500" />
+      <StatCard label="Finished" value={stats.finished.toString()} unit="Kg" icon={<CheckCircle />} color="bg-emerald-500" />
     </div>
   );
 };

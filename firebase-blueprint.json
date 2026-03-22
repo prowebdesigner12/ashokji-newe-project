@@ -1,5 +1,20 @@
 {
   "entities": {
+    "Order": {
+      "title": "Order",
+      "description": "Customer order details",
+      "type": "object",
+      "properties": {
+        "orderNo": { "type": "string" },
+        "customerName": { "type": "string" },
+        "materialGrade": { "type": "string" },
+        "totalQuantity": { "type": "number" },
+        "deliveryDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["pending", "in-progress", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderNo", "customerName", "totalQuantity"]
+    },
     "Batch": {
       "title": "Batch",
       "description": "Master batch of raw material",
@@ -64,6 +79,7 @@
     }
   },
   "firestore": {
+    "/orders": { "schema": "Order", "description": "Customer orders" },
     "/batches": { "schema": "Batch", "description": "Master batches" },
     "/bandSawEntries": { "schema": "BandSawEntry", "description": "Band saw cutting records" },
     "/inspections": { "schema": "InspectionRecord", "description": "Piece-by-piece inspection data" },
