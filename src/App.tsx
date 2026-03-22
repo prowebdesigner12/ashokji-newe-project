@@ -53,6 +53,8 @@ import {
   where, 
   updateDoc, 
   doc, 
+  getDoc,
+  setDoc,
   getDocs,
   serverTimestamp,
   Timestamp,
@@ -216,8 +218,10 @@ export default function App() {
       setUser(currentUser);
       if (currentUser) {
         // Fetch or create user profile
-        const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', currentUser.uid)));
-        if (userDoc.empty) {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (!userDocSnap.exists()) {
           const newProfile: UserProfile = {
             uid: currentUser.uid,
             email: currentUser.email || '',
@@ -226,10 +230,10 @@ export default function App() {
             role: currentUser.email === 'prashantbagriya7877@gmail.com' ? 'admin' : 'viewer',
             createdAt: new Date().toISOString()
           };
-          await addDoc(collection(db, 'users'), newProfile);
+          await setDoc(userDocRef, newProfile);
           setCurrentUserProfile(newProfile);
         } else {
-          setCurrentUserProfile({ id: userDoc.docs[0].id, ...userDoc.docs[0].data() } as any);
+          setCurrentUserProfile({ id: userDocSnap.id, ...userDocSnap.data() } as any);
         }
       } else {
         setCurrentUserProfile(null);
@@ -437,7 +441,12 @@ export default function App() {
       `Guide Ø50: ${reportData.guide50} pcs`;
     
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    // window.open is restricted in iframe, using a direct link approach
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.click();
   };
 
   const updateStatus = async (id: string, newStatus: ProcessStatus) => {
