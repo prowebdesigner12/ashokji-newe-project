@@ -29,9 +29,11 @@ import {
   doc, 
   getDocs,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  getDocFromServer
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, auth, handleFirestoreError, OperationType } from './firebase';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, User } from 'firebase/auth';
 import { DashboardStats } from './components/DashboardStats';
 import { BandSawEntry, ProcessStatus, Batch } from './types';
 
@@ -49,6 +51,8 @@ export default function App() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [bandSawEntries, setBandSawEntries] = useState<BandSawEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   // Inspection State
   const [inspectingBundle, setInspectingBundle] = useState<BandSawEntry | null>(null);
@@ -65,11 +69,36 @@ export default function App() {
   });
 
   useEffect(() => {
+    const testConnection = async () => {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Please check your Firebase configuration. The client is offline.");
+        }
+        // Skip logging for other errors, as this is simply a connection test.
+      }
+    };
+    testConnection();
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setIsAuthReady(true);
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+
     // Fetch Batches
     const qBatches = query(collection(db, 'batches'));
     const unsubscribeBatches = onSnapshot(qBatches, (snapshot) => {
       const batchData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Batch));
       setBatches(batchData);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'batches');
     });
 
     // Fetch Band Saw Entries
@@ -78,18 +107,30 @@ export default function App() {
       const entryData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BandSawEntry));
       setBandSawEntries(entryData);
       setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'bandSawEntries');
     });
 
     return () => {
       unsubscribeBatches();
       unsubscribeEntries();
     };
-  }, []);
+  }, [isAuthReady]);
+
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Login Error:", error);
+    }
+  };
 
   const handleSaveBandSaw = async (e: React.FormEvent) => {
     e.preventDefault();
+    const path = 'bandSawEntries';
     try {
-      await addDoc(collection(db, 'bandSawEntries'), {
+      await addDoc(collection(db, path), {
         ...bandSawForm,
         cutLength: Number(bandSawForm.cutLength),
         pcsCut: Number(bandSawForm.pcsCut),
@@ -107,15 +148,16 @@ export default function App() {
         endCutWeight: '0',
       });
     } catch (error) {
-      console.error("Error saving band saw entry:", error);
+      handleFirestoreError(error, OperationType.CREATE, path);
     }
   };
 
   const updateStatus = async (id: string, newStatus: ProcessStatus) => {
+    const path = `bandSawEntries/${id}`;
     try {
       await updateDoc(doc(db, 'bandSawEntries', id), { status: newStatus });
     } catch (error) {
-      console.error("Error updating status:", error);
+      handleFirestoreError(error, OperationType.UPDATE, path);
     }
   };
 
@@ -143,7 +185,7 @@ export default function App() {
       await updateDoc(doc(db, 'bandSawEntries', inspectingBundle.id), { status: 'finished' });
       setInspectingBundle(null);
     } catch (error) {
-      console.error("Error saving inspection:", error);
+      handleFirestoreError(error, OperationType.WRITE, 'inspections/bandSawEntries');
     }
   };
 
@@ -152,6 +194,35 @@ export default function App() {
     newData[index][field] = value;
     setInspectionData(newData);
   };
+
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
+          <p className="text-gray-500 font-medium">Initializing system...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-black/5 p-8 text-center">
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white font-bold text-2xl shadow-lg shadow-blue-500/20">JJ</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2 uppercase tracking-tight">JAY JAGDAMBA LIMITED</h2>
+          <p className="text-gray-500 mb-8 font-medium">Please sign in to access the HRM Material Tracking System</p>
+          <button
+            onClick={handleLogin}
+            className="flex items-center justify-center gap-2 w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+          >
+            Sign in with Google
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans">
